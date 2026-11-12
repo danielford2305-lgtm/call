@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Calling…</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;background:#f3f4f6;color:#1f2937;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+  .card{background:#fff;border:1px solid #e5e7eb;padding:28px 32px;text-align:center;max-width:360px}
+  .num{font-size:26px;font-weight:bold;margin:8px 0 18px}
+  a.btn{display:inline-block;background:#1e3a8a;color:#fff;text-decoration:none;padding:10px 18px;margin:4px;font-size:15px}
+  a.alt{background:#6b7280}
+  p{font-size:13px;color:#6b7280}
+</style>
+</head>
+<body>
+<div class="card">
+  <div>Calling with Zoom</div>
+  <div class="num" id="num">…</div>
+  <a class="btn" id="zoom" href="#">Call again</a>
+  <a class="btn alt" id="tel" href="#">Use default phone app</a>
+  <p>You can close this tab after the call starts.</p>
+</div>
+<script>
+  // ?n=8664883983 (any format). Only US 10-digit numbers are dialled.
+  var raw = new URLSearchParams(location.search).get('n') || '';
+  var d = raw.replace(/\D/g, '');
+  if (d.length === 11 && d.charAt(0) === '1') d = d.slice(1);
+  var ok = d.length === 10;
+  var e164 = '+1' + d;
+  document.getElementById('num').textContent = ok
+    ? '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6)
+    : 'Not a valid US number';
+  if (ok) {
+    var zoom = 'zoomphonecall://' + encodeURIComponent(e164);
+    document.getElementById('zoom').href = zoom;
+    document.getElementById('tel').href = 'tel:' + e164;
+    location.href = zoom;                       // hand the number to the Zoom app
+  } else {
+    document.getElementById('zoom').style.display = 'none';
+    document.getElementById('tel').style.display = 'none';
+  }
+</script>
+</body>
+</html>
