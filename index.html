@@ -20,15 +20,20 @@
   <div class="num" id="num">…</div>
   <a class="btn" id="zoom" href="#">Call again</a>
   <a class="btn alt" id="tel" href="#">Use default phone app</a>
-  <p>You can close this tab after the call starts.</p>
+  <p id="note">This tab closes by itself in a moment.</p>
 </div>
 <script>
   // ?n=8664883983 (any format). Only US 10-digit numbers are dialled.
-  var raw = new URLSearchParams(location.search).get('n') || '';
-  var d = raw.replace(/\D/g, '');
+  // Auto-close: the tab closes 1.5 s after handing the number to Zoom.
+  // The very first time on a browser it stays open, so the "Open Zoom?" prompt can be answered
+  // (tick "Always allow"). Add &stay=1 to the link to keep the tab open on purpose.
+  var CLOSE_AFTER_MS = 1500;
+  var q = new URLSearchParams(location.search);
+  var d = (q.get('n') || '').replace(/\D/g, '');
   if (d.length === 11 && d.charAt(0) === '1') d = d.slice(1);
   var ok = d.length === 10;
   var e164 = '+1' + d;
+  var note = document.getElementById('note');
   document.getElementById('num').textContent = ok
     ? '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6)
     : 'Not a valid US number';
@@ -37,9 +42,24 @@
     document.getElementById('zoom').href = zoom;
     document.getElementById('tel').href = 'tel:' + e164;
     location.href = zoom;                       // hand the number to the Zoom app
+
+    var firstTime = true;
+    try { firstTime = !localStorage.getItem('zoomDialSeen'); localStorage.setItem('zoomDialSeen', '1'); } catch (e) {}
+    if (q.get('stay') === '1' || firstTime) {
+      note.textContent = firstTime
+        ? 'First call on this browser: tick "Always allow" when asked to open Zoom. From the next call this tab closes by itself.'
+        : 'You can close this tab after the call starts.';
+    } else {
+      setTimeout(function () {
+        window.close();
+        // If the browser refused to close it, say so instead of leaving a silent page.
+        setTimeout(function () { note.textContent = 'You can close this tab after the call starts.'; }, 300);
+      }, CLOSE_AFTER_MS);
+    }
   } else {
     document.getElementById('zoom').style.display = 'none';
     document.getElementById('tel').style.display = 'none';
+    note.textContent = '';
   }
 </script>
 </body>
